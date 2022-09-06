@@ -122,6 +122,7 @@ def get_label(trace):
         label_list.extend(np.asarray(label))
     return np.array(label_list)
 
+
 # build_dataset()
 
 if __name__ == "__main__":
@@ -135,7 +136,6 @@ if __name__ == "__main__":
     #
     print("finished")
 
-    #
     # import matplotlib.pyplot as plt
     # plt.hist(label_arr)
     # plt.show()

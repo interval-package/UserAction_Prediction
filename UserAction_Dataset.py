@@ -1,5 +1,4 @@
-from paddle.fluid.dataloader import random_split
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, random_split
 from data.build_dataset import get_label
 import numpy as np
 import pandas as pd
@@ -13,8 +12,7 @@ class UserAction_Dataset(Dataset):
     dtype = np.dtype([("id", "i4"), ("time", "f4"), ("screen_lock_status", "i1"), ("network_status", "i1"),
                       ("battery_charge_status", "i1"), ("screen_status", "i1"), ("battery_level", "i1"),
                       ("idle", "i1")])
-    thus we aiming at using the historical data the predict next time action                 
-    
+    thus we aiming at using the historical data the predict next time action
     """
 
     dtype = np.dtype([("id", "i4"), ("time", "f4"), ("screen_lock_status", "i1"), ("network_status", "i1"),
@@ -47,7 +45,7 @@ class UserAction_Dataset(Dataset):
 
 if __name__ == '__main__':
     # from torch.utils.data import random_split
-    #
+
     tar = UserAction_Dataset()
     print(tar[0])
 
