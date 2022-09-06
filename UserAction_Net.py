@@ -6,10 +6,10 @@ import torch.nn as nn
 
 
 class UserAction_Net(nn.Module):
-    def __init__(self, inp_dim=5,
+    def __init__(self, inp_dim=8,
                  out_dim=1,
                  mid_dim=8,
-                 mid_layers=1):
+                 mid_layers=2):
         super(UserAction_Net, self).__init__()
 
         self.LSTM = nn.LSTM(inp_dim, mid_dim, mid_layers)  # rnn

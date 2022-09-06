@@ -21,10 +21,7 @@ class UserAction_Dataset(Dataset):
 
     def __init__(self):
         super(UserAction_Dataset, self).__init__()
-        self.source = np.load("./data/temp/trace.npy",
-                              mmap_mode=None,
-                              allow_pickle=True,
-                              fix_imports=True)
+        self.source = pd.read_csv("./data/trace.csv").values[:, :-1].astype(int)
 
         self.label = np.load("./data/temp/label_arr.npy",
                              mmap_mode=None,
@@ -49,13 +46,13 @@ if __name__ == '__main__':
     tar = UserAction_Dataset()
     print(tar[0])
 
-    train_percent = int(len(tar)*0.7)
-    train, test = random_split(tar, [train_percent, len(tar) - train_percent])
-    train_loader = DataLoader(train)
-    test_loader = DataLoader(test)
-
-    for arr, y in train_loader:
-        print(arr, y)
+    # train_percent = int(len(tar)*0.7)
+    # train, test = random_split(tar, [train_percent, len(tar) - train_percent])
+    # train_loader = DataLoader(train)
+    # test_loader = DataLoader(test)
+    #
+    # for arr, y in train_loader:
+    #     print(arr, y)
 
     # print(temp[0])
     # print(get_label(obj.source))
