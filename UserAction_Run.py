@@ -1,9 +1,15 @@
-import pickle
+"""
+
+"""
+import pandas as pd
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 from UserAction_Net import *
 from UserAction_Dataset import UserAction_Dataset
 from torch.utils.data import DataLoader, random_split
-import pickle as pkl
+
+from tqdm import tqdm
+import pickle
 
 
 class UserAction_run:
@@ -24,8 +30,11 @@ class UserAction_run:
 
     def __init__(self, model: nn.Module = None,
                  sampling_percent: float = 0.9,
-                 rand_sampling: bool = False):
+                 sampling_type: str = 'part'):
         """
+        sampling_type: str {'part', 'rand'}
+        'part' would straightly split the dataset in the midlle
+        'rand' would call rand sampling methods
         :cvar
         """
         if model is not None:
@@ -38,21 +47,30 @@ class UserAction_run:
         # sampling set
         data = UserAction_Dataset.default_init()
         train_len = int(len(data) * sampling_percent)
-        if rand_sampling:
+        if sampling_type is 'rand':
             # 随机取样
             train, test = random_split(data, [train_len, len(data) - train_len])
-        else:
+        elif sampling_type is 'part':
             train, test = data[:train_len], data[train_len:]
             train = UserAction_Dataset(train[0], train[1])
             test = UserAction_Dataset(test[0], test[1])
             pass
+        else:
+            raise ValueError("unrecognized type for sampling")
         self.train_loader = DataLoader(train)
         self.test_loader = DataLoader(test)
         self.model.to(self.device)
         pass
 
+    @classmethod
+    def loading_init(cls):
+        """
+        loading trained model from file
+        :return:
+        """
+        return cls(cls.load(), sampling_type='part')
+
     def train(self):
-        from tqdm import tqdm
         batch = self.train_loader
         # 开始训练
         print("Training......")
@@ -79,17 +97,43 @@ class UserAction_run:
                 print('Epoch: {:4}, Loss: {:.5f}'.format(e, Loss.item()))
         pass
 
-    def save(self, path="./model.pkl"):
+    def save(self, path="./data/model.pkl"):
         pickle.dump(self.model, open(path, 'wb'))
 
     @staticmethod
-    def load(path="./model.pkl"):
+    def load(path="./data/model.pkl"):
         return pickle.load(open(path, 'rb'))
+
+    # 模型测试
+    def test(self):
+        print('test model')
+        model = self.model.to(self.device)
+        model.eval()
+        avg_acc = 0
+        with tqdm(total=len(self.test_loader), desc="test process:", position=0) as bar:
+            for i, data in enumerate(self.test_loader):
+                x, y_test = data
+                pred = model(x)
+                df = self.get_accuracy(y_test, pred)
+                print(df)
+                # avg_acc += df["验证集准确率"]
+                bar.update(1)
+                pass
+        # avg_acc = avg_acc / len(self.test_loader)
+        return avg_acc
+
+    @staticmethod
+    def get_accuracy(y_test, y_x):
+        df = pd.DataFrame()
+        df["验证集准确率"] = "{:.2f}%".format(accuracy_score(y_test, y_x) * 100)
+        df["验证集精确率"] = "{:.2f}%".format(precision_score(y_test, y_x, average='macro') * 100)  # 打印验证集查准率
+        df["验证集召回率"] = "{:.2f}%".format(recall_score(y_test, y_x, average='macro') * 100)  # 打印验证集查全率
+        df["验证集F1值"] = "{:.2f}%".format(f1_score(y_test, y_x, average='macro') * 100)
+        return df
 
 
 if __name__ == '__main__':
     obj = UserAction_run()
     obj.train()
     obj.save()
-
     pass

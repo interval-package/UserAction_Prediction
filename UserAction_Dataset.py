@@ -20,6 +20,10 @@ class UserAction_Dataset(Dataset):
 
     @classmethod
     def default_init(cls):
+        """
+        default loading all the data without sampling
+        :return:
+        """
         source = pd.read_csv("./data/trace.csv").values[:, :-1]
 
         label = np.load("./data/temp/label_arr.npy",
