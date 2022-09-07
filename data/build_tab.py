@@ -3,9 +3,11 @@ import pandas as pd
 
 a = np.load("./temp/trace.npy", mmap_mode=None, allow_pickle=True, fix_imports=True)
 
-names = [("id", "i4"), ("time", "f4"), ("screen_lock_status", "i1"), ("network_status", "i1"),
-         ("battery_charge_status", "i1"), ("screen_status", "i1"), ("battery_level", "i1"),
-         ("idle", "i1")]
+names = \
+    [("id", "i4"), ("time", "f4"), ("day", "i1"), ("hours", "i2"), ("minutes", "i2"), ("screen_lock_status", "i1"),
+     ("network_status", "i1"),
+     ("battery_charge_status", "i1"), ("screen_status", "i1"), ("battery_level", "i1"),
+     ("is_free", "i1"), ("idle", "i1")]
 
 label = np.load("./temp/label_arr.npy", mmap_mode=None, allow_pickle=True, fix_imports=True).astype(int)
 
