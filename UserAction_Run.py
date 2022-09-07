@@ -14,8 +14,9 @@ import pickle
 
 class UserAction_run:
     __doc__ = """
-        lr = 1e-2
-        epoch_num = 1000
+        there are some build in params:
+            lr = 1e-2; the learning rate
+            epoch_num = 20; training epoch times
     """
 
     # define params
@@ -32,10 +33,10 @@ class UserAction_run:
                  sampling_percent: float = 0.9,
                  sampling_type: str = 'part'):
         """
-        sampling_type: str {'part', 'rand'}
-        'part' would straightly split the dataset in the midlle
-        'rand' would call rand sampling methods
         :cvar
+        sampling_type: str {'part', 'rand'}: for specific type of sampling
+            'part': would straightly split the dataset in the middle
+            'rand': would call rand sampling methods
         """
         if model is not None:
             self.model = model
@@ -46,17 +47,17 @@ class UserAction_run:
 
         # sampling set
         data = UserAction_Dataset.default_init()
-        train_len = int(len(data) * sampling_percent)
-        if sampling_type is 'rand':
+        if sampling_type == 'rand':
             # 随机取样
-            train, test = random_split(data, [train_len, len(data) - train_len])
-        elif sampling_type is 'part':
-            train, test = data[:train_len], data[train_len:]
-            train = UserAction_Dataset(train[0], train[1])
-            test = UserAction_Dataset(test[0], test[1])
+            train, test = data.split_rand_sample(sampling_percent)
+        elif sampling_type == 'part':
+            # 直接采样，直接将数据集分割为两部分
+            train, test = data.split_part_sample(sampling_percent)
             pass
         else:
             raise ValueError("unrecognized type for sampling")
+        del data
+
         self.train_loader = DataLoader(train)
         self.test_loader = DataLoader(test)
         self.model.to(self.device)
@@ -66,7 +67,7 @@ class UserAction_run:
     def loading_init(cls):
         """
         loading trained model from file
-        :return:
+        :return: model load from file
         """
         return cls(cls.load(), sampling_type='part')
 
@@ -106,34 +107,46 @@ class UserAction_run:
 
     # 模型测试
     def test(self):
-        print('test model')
-        model = self.model.to(self.device)
-        model.eval()
+        print('testing model......')
+        self.model.eval()
         avg_acc = 0
-        with tqdm(total=len(self.test_loader), desc="test process:", position=0) as bar:
-            for i, data in enumerate(self.test_loader):
-                x, y_test = data
-                pred = model(x)
-                df = self.get_accuracy(y_test, pred)
-                print(df)
-                # avg_acc += df["验证集准确率"]
-                bar.update(1)
-                pass
-        # avg_acc = avg_acc / len(self.test_loader)
-        return avg_acc
+        y_x, y_test = [], []
+        with tqdm(total=len(self.test_loader), desc="pred and test process:", position=0) as bar:
+            with torch.no_grad():
+                for i, data in enumerate(self.test_loader):
+                    x, y = data
+                    pred = self.predict(x)
+                    y_x.append(pred.item())
+                    y_test.append(y.item())
+                    bar.update(1)
+                    pass
+                res = self.get_accuracy(y_test, y_x)
+        print(res)
+        return res
+
+    def predict(self, inputs):
+        """
+        :param inputs: 也就是输入的参数，在这里会被展开，才能传入网络
+        :return: 这里网络输出并不是最直接预测的结果，我们使用概率最大作为可能
+        """
+        inputs = inputs.view(len(inputs), 1, -1)
+        outputs = self.model(inputs).max(dim=1)[1]
+        return outputs
 
     @staticmethod
-    def get_accuracy(y_test, y_x):
-        df = pd.DataFrame()
-        df["验证集准确率"] = "{:.2f}%".format(accuracy_score(y_test, y_x) * 100)
-        df["验证集精确率"] = "{:.2f}%".format(precision_score(y_test, y_x, average='macro') * 100)  # 打印验证集查准率
-        df["验证集召回率"] = "{:.2f}%".format(recall_score(y_test, y_x, average='macro') * 100)  # 打印验证集查全率
-        df["验证集F1值"] = "{:.2f}%".format(f1_score(y_test, y_x, average='macro') * 100)
-        return df
+    def get_accuracy(y_test, y_x) -> dict:
+        print("getting accuracy")
+        res = dict()
+        res["accuracy_score"] = accuracy_score(y_test, y_x) * 100
+        res["precision_score"] = precision_score(y_test, y_x, average='macro') * 100  # 打印验证集查准率
+        res["recall_score"] = recall_score(y_test, y_x, average='macro') * 100  # 打印验证集查全率
+        res["f1_score"] = f1_score(y_test, y_x, average='macro') * 100
+        return res
 
 
 if __name__ == '__main__':
     obj = UserAction_run()
-    obj.train()
-    obj.save()
+    obj.test()
+    # obj.train()
+    # obj.save()
     pass

@@ -15,7 +15,7 @@ class UserAction_Dataset(Dataset):
     def __init__(self, source, label):
         super(UserAction_Dataset, self).__init__()
         self.source = torch.tensor(source, dtype=torch.float)
-        self.label = torch.tensor(label,dtype=torch.float)
+        self.label = torch.tensor(label, dtype=torch.float)
         pass
 
     @classmethod
@@ -38,34 +38,24 @@ class UserAction_Dataset(Dataset):
     def __len__(self):
         return len(self.source)
 
-    def split(self, percent: float):
+    def split_rand_sample(self, sampling_percent: float):
+        train_len = int(len(data) * sampling_percent)
+        train, test = random_split(self, [train_len, len(self) - train_len])
+        return train, test
+
+    def split_part_sample(self, sampling_percent: float):
+        train_len = int(len(self) * sampling_percent)
+        train, test = self[:train_len], self[train_len:]
+        train = UserAction_Dataset(train[0], train[1])
+        test = UserAction_Dataset(test[0], test[1])
+        return train, test
+
+    def split_order_sample(self, sampling_percent: float):
         return
 
 
-# class UserAction_Dataloader(DataLoader):
-#     pass
-
-
 if __name__ == '__main__':
-    # from torch.utils.data import random_split
-
-    sampling_percent = 0.7
-    rand_sampling = False
 
     data = UserAction_Dataset.default_init()
-    train_len = int(len(data) * sampling_percent)
-    if rand_sampling:
-        # 随机取样
-        train, test = random_split(data, [train_len, len(data) - train_len])
-    else:
-        train, test = data[:train_len], data[train_len:]
-        train = UserAction_Dataset(train[0], train[1])
-        test = UserAction_Dataset(test[0], test[1])
-        pass
-    train_loader = DataLoader(train)
-    test_loader = DataLoader(test)
-
-    for i in train_loader:
-        print(i)
 
     pass
