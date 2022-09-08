@@ -6,6 +6,10 @@ import torch.nn as nn
 
 
 class UserAction_Net(nn.Module):
+
+    # define device info
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     def __init__(self, inp_dim=12,
                  out_dim=1,
                  mid_dim=1,
@@ -20,6 +24,7 @@ class UserAction_Net(nn.Module):
         )  # regression
 
     def forward(self, x):
+        x.to(self.device)
         y = self.LSTM(x)[0]  # y, (h, c) = self.rnn(x)
         seq_len, batch_size, hid_dim = y.shape
         y = y.view(-1, hid_dim)

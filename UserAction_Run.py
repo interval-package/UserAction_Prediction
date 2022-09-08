@@ -46,6 +46,8 @@ class UserAction_run:
         else:
             self.model = UserAction_Net()
 
+        UserAction_Net.device = self.device
+
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
 
         # sampling set
@@ -70,16 +72,17 @@ class UserAction_run:
         pass
 
     @classmethod
-    def loading_init(cls):
+    def loading_init(cls, path):
         """
         loading trained model from file
         :return: model load from file
         """
-        return cls(cls.load(), sampling_type='part')
+        return cls(cls.load(path), sampling_type='part')
 
     def train(self):
         batch = self.train_loader
         # 开始训练
+        print('start to training model......')
         logging.info('start to training model......')
         for e in range(self.epoch_num):
             with tqdm(batch, desc="epoch:{}".format(str(e)), position=0) as t_epoch:
@@ -87,6 +90,7 @@ class UserAction_run:
                     # forward
                     # inputs, labels = data
                     inputs = inputs.view(len(inputs), 1, -1)
+                    inputs.to(self.device)
                     outputs = self.model(inputs)
 
                     # Compute loss
