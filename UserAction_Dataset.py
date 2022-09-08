@@ -14,8 +14,8 @@ class UserAction_Dataset(Dataset):
 
     def __init__(self, source, label):
         super(UserAction_Dataset, self).__init__()
-        self.source = torch.tensor(source, dtype=torch.float)
-        self.label = torch.tensor(label, dtype=torch.float)
+        self.source = torch.as_tensor(source, dtype=torch.float)
+        self.label = torch.as_tensor(label, dtype=torch.float)
         pass
 
     @classmethod

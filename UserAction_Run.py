@@ -1,6 +1,8 @@
 """
 
 """
+import logging
+
 import pandas as pd
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
@@ -38,6 +40,7 @@ class UserAction_run:
             'part': would straightly split the dataset in the middle
             'rand': would call rand sampling methods
         """
+
         if model is not None:
             self.model = model
         else:
@@ -61,6 +64,9 @@ class UserAction_run:
         self.train_loader = DataLoader(train)
         self.test_loader = DataLoader(test)
         self.model.to(self.device)
+
+        logging.info("pre-building finished, with {} split method at {:2f}.".format(sampling_type, sampling_percent))
+        logging.info("using device: {}".format(self.device.type()))
         pass
 
     @classmethod
@@ -74,12 +80,12 @@ class UserAction_run:
     def train(self):
         batch = self.train_loader
         # 开始训练
-        print("Training......")
+        logging.info('start to training model......')
         for e in range(self.epoch_num):
-            with tqdm(total=len(batch), desc="epoch:{}".format(str(e)), position=0) as bar:
-                for i, data in enumerate(batch):
+            with tqdm(batch, desc="epoch:{}".format(str(e)), position=0) as t_epoch:
+                for inputs, labels in t_epoch:
                     # forward
-                    inputs, labels = data
+                    # inputs, labels = data
                     inputs = inputs.view(len(inputs), 1, -1)
                     outputs = self.model(inputs)
 
@@ -93,7 +99,7 @@ class UserAction_run:
                     # update weights
                     self.optimizer.step()
 
-                    bar.update(1)
+                    t_epoch.set_postfix(Loss=Loss.item())
             if e % 10 == 0:
                 print('Epoch: {:4}, Loss: {:.5f}'.format(e, Loss.item()))
         pass
@@ -107,21 +113,19 @@ class UserAction_run:
 
     # 模型测试
     def test(self):
-        print('testing model......')
+        logging.info('start to testing model......')
         self.model.eval()
-        avg_acc = 0
         y_x, y_test = [], []
-        with tqdm(total=len(self.test_loader), desc="pred and test process:", position=0) as bar:
+        with tqdm(self.test_loader, desc="pred and test process:", position=0) as bar:
             with torch.no_grad():
-                for i, data in enumerate(self.test_loader):
-                    x, y = data
+                for x, y in bar:
                     pred = self.predict(x)
                     y_x.append(pred.item())
                     y_test.append(y.item())
-                    bar.update(1)
                     pass
                 res = self.get_accuracy(y_test, y_x)
-        print(res)
+        logging.info("finished testing!")
+        logging.info(res.__str__())
         return res
 
     def predict(self, inputs):
@@ -145,8 +149,8 @@ class UserAction_run:
 
 
 if __name__ == '__main__':
-    obj = UserAction_run()
-    obj.test()
+    # obj = UserAction_run()
     # obj.train()
     # obj.save()
+    # obj.test()
     pass

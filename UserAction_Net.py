@@ -25,6 +25,7 @@ class UserAction_Net(nn.Module):
         y = y.view(-1, hid_dim)
         y = self.reg(y)
         y = y.view(seq_len, batch_size, -1)
+        y = y.reshape(1)
         return y
 
     pass
