@@ -66,7 +66,7 @@ class UserAction_run:
         self.model.to(self.device)
 
         logging.info("pre-building finished, with {} split method at {:2f}.".format(sampling_type, sampling_percent))
-        logging.info("using device: {}".format(self.device.type()))
+        logging.info("using device: {}".format(self.device))
         pass
 
     @classmethod
@@ -101,7 +101,7 @@ class UserAction_run:
 
                     t_epoch.set_postfix(Loss=Loss.item())
             if e % 10 == 0:
-                print('Epoch: {:4}, Loss: {:.5f}'.format(e, Loss.item()))
+                logging.info('Epoch: {:4}, Loss: {:.5f}'.format(e, Loss.item()))
         pass
 
     def save(self, path="./data/model.pkl"):
