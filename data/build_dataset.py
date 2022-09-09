@@ -164,7 +164,7 @@ def get_label(trace: object) -> object:
 # build_dataset()
 
 if __name__ == "__main__":
-    # build_dataset()
+    build_dataset()
     a = np.load("./temp/trace.npy", mmap_mode=None, allow_pickle=True, fix_imports=True)
     print(a)
     label_arr = get_label(a)

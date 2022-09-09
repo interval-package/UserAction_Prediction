@@ -1,0 +1,17 @@
+2022-09-09 08:22:06,826 - INFO:: pre-building finished, with part split method at 0.900000.
+2022-09-09 08:22:06,827 - INFO:: using device: cpu
+2022-09-09 08:22:06,827 - INFO:: start to testing model......
+2022-09-09 08:27:26,307 - INFO:: Program start.....
+2022-09-09 08:27:26,964 - INFO:: pre-building finished, with part split method at 0.900000.
+2022-09-09 08:27:26,964 - INFO:: using device: cpu
+2022-09-09 08:27:26,964 - INFO:: start to testing model......
+2022-09-09 08:27:53,357 - INFO:: finished testing!
+2022-09-09 08:27:53,357 - INFO:: {'accuracy_score': 96.46716427502501, 'precision_score': 48.23358213751251, 'recall_score': 50.0, 'f1_score': 49.10090937129078}
+2022-09-09 08:30:27,574 - INFO:: Program start....., detail in ./runs/logs/model.log
+2022-09-09 08:30:27,577 - INFO:: loading models from ./data/model.pkl
+2022-09-09 08:30:28,253 - INFO:: pre-building finished, with part split method at 0.900000.
+2022-09-09 08:30:28,253 - INFO:: using device: cpu
+2022-09-09 08:30:28,253 - INFO:: start to testing model......
+2022-09-09 08:30:55,110 - INFO:: getting accuracy
+2022-09-09 08:30:55,387 - INFO:: finished testing!
+2022-09-09 08:30:55,388 - INFO:: {'accuracy_score': 96.46716427502501, 'precision_score': 48.23358213751251, 'recall_score': 50.0, 'f1_score': 49.10090937129078}

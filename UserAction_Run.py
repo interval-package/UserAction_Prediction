@@ -138,12 +138,14 @@ class UserAction_run:
         :return: 这里网络输出并不是最直接预测的结果，我们使用概率最大作为可能
         """
         inputs = inputs.view(len(inputs), 1, -1)
-        outputs = self.model(inputs).max(dim=1)[1]
+        # inputs = torch.unsqueeze(inputs, 0)
+        # outputs = self.model(inputs).max(dim=1)[1]
+        outputs = self.model(inputs).int()
         return outputs
 
     @staticmethod
     def get_accuracy(y_test, y_x) -> dict:
-        print("getting accuracy")
+        logging.info("getting accuracy")
         res = dict()
         res["accuracy_score"] = accuracy_score(y_test, y_x) * 100
         res["precision_score"] = precision_score(y_test, y_x, average='macro') * 100  # 打印验证集查准率

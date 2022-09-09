@@ -14,8 +14,7 @@ parser.add_argument(
     help="edit log saving path"
 )
 parser.add_argument(
-    "--load", action="store",
-    type=bool, default=False,
+    "--load", action="store_true",
     help="load model from file"
 )
 parser.add_argument(
@@ -29,20 +28,25 @@ parser.add_argument(
     help="train epoch"
 )
 parser.add_argument(
-    "--cuda", action="store",
+    "--gpu", action="store",
     type=bool, default=False,
-    help="using cuda"
+    help="using gpu"
 )
 parser.add_argument(
     "--test", action="store_true",
-    type=bool, default=True,
     help="enable to predict"
 )
 parser.add_argument(
     "--train", action="store_true",
-    type=bool, default=True,
     help="enable to train"
 )
+
+parser.add_argument(
+    "--sampling", action="store",
+    type=str, default="part",
+    help="split method for the Dataset"
+)
+
 
 if __name__ == '__main__':
 
@@ -51,12 +55,18 @@ if __name__ == '__main__':
                         level=logging.INFO if args.verbose else logging.WARNING,
                         filename=args.logpath,
                         filemode='a')
+    logging.info("Program start....., detail in {}".format(args.logpath))
     if args.load:
-        obj = UserAction_run()
-    else:
+        logging.info("loading models from {}".format(args.modelpath))
         obj = UserAction_run.loading_init(args.modelpath)
+    else:
+        logging.info("new model build")
+        obj = UserAction_run(sampling_type=args.sampling)
 
-    if args.cuda:
+    obj.epoch_num = args.epochs
+
+    if args.gpu:
+        logging.info("try to use cuda")
         obj.device = torch.device("cuda")
         obj.model.device = obj.device
 
