@@ -3,6 +3,7 @@ from data.build_dataset import get_label
 import numpy as np
 import pandas as pd
 import torch
+import pickle
 
 
 class UserAction_Dataset(Dataset):
@@ -30,18 +31,31 @@ class UserAction_Dataset(Dataset):
         pass
 
     @classmethod
-    def default_init(cls):
+    def default_init(cls, is_pkl=False):
         """
         default loading all the data without sampling
         :return:
         """
-        source = pd.read_csv("./data/trace.csv").values[:, :-1]
-
-        label = np.load("./data/temp/label_arr.npy",
-                        mmap_mode=None,
-                        allow_pickle=True,
-                        fix_imports=True)
+        if is_pkl:
+            temp = pickle.load(open("./data/trace.pkl", "rb"))
+        else:
+            temp = pd.read_csv("./data/trace.csv")
+        source = temp.values[:, :-1]
+        label = temp.values[:, -1]
         return cls(source, label)
+
+    @classmethod
+    def by_day_init(cls):
+        """
+        使用正像数据进行划分
+
+        :return: train dataset, test dataset
+        """
+        df_temp = pd.read_csv("./data/trace.csv")
+        df_train = df_temp[(df_temp['day'] >= 1) & (df_temp['day'] <= 4)]
+        df_test = df_temp[df_temp['day'] == 5]
+        df_test = df_test[df_test['is_free'] == 1]
+        return cls(df_train.values[:, :-1], df_train[:, -1]), cls(df_test.values[:, :-1], df_test[:, -1])
 
     def __getitem__(self, index):
         return self.source[index], self.label[index]
@@ -67,6 +81,7 @@ class UserAction_Dataset(Dataset):
 
 if __name__ == '__main__':
 
-    data = UserAction_Dataset.default_init()
+    temp = pd.read_csv("./data/trace.csv")
+    pickle.dump(temp, open("./data/trace.pkl", "wb"))
 
     pass

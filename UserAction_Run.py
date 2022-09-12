@@ -51,12 +51,15 @@ class UserAction_run:
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
 
         # sampling set
-        data = UserAction_Dataset.default_init()
-        if sampling_type == 'rand':
+        if sampling_type == 'by day':
+            train, test = UserAction_Dataset.by_day_init()
+        elif sampling_type == 'rand':
             # 随机取样
+            data = UserAction_Dataset.default_init()
             train, test = data.split_rand_sample(sampling_percent)
         elif sampling_type == 'part':
             # 直接采样，直接将数据集分割为两部分
+            data = UserAction_Dataset.default_init()
             train, test = data.split_part_sample(sampling_percent)
             pass
         else:
