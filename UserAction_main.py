@@ -28,9 +28,8 @@ parser.add_argument(
     help="train epoch"
 )
 parser.add_argument(
-    "--gpu", action="store",
-    type=bool, default=False,
-    help="using gpu"
+    "--gpu", action="store_true",
+    help="using gpu, without this will auto detect"
 )
 parser.add_argument(
     "--test", action="store_true",

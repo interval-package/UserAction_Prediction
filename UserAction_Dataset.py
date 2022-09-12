@@ -18,6 +18,17 @@ class UserAction_Dataset(Dataset):
         self.label = torch.as_tensor(label, dtype=torch.float)
         pass
 
+    def change_device(self, dev):
+        """
+        we should transport the dataset to the device as we init the dataset
+
+        :param dev: target device
+        :return:
+        """
+        self.source = self.source.to(dev)
+        self.label = self.label.to(dev)
+        pass
+
     @classmethod
     def default_init(cls):
         """
@@ -39,9 +50,9 @@ class UserAction_Dataset(Dataset):
         return len(self.source)
 
     def split_rand_sample(self, sampling_percent: float):
-        train_len = int(len(data) * sampling_percent)
+        train_len = int(len(self) * sampling_percent)
         train, test = random_split(self, [train_len, len(self) - train_len])
-        return train, test
+        return train.dataset, test.dataset
 
     def split_part_sample(self, sampling_percent: float):
         train_len = int(len(self) * sampling_percent)

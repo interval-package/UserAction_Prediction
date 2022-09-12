@@ -46,7 +46,7 @@ class UserAction_run:
         else:
             self.model = UserAction_Net()
 
-        UserAction_Net.device = self.device
+        self.model.device = self.device
 
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
 
@@ -63,12 +63,15 @@ class UserAction_run:
             raise ValueError("unrecognized type for sampling")
         del data
 
+        train.change_device(self.device)
+        test.change_device(self.device)
+
         self.train_loader = DataLoader(train)
         self.test_loader = DataLoader(test)
         self.model.to(self.device)
 
         logging.info("pre-building finished, with {} split method at {:2f}.".format(sampling_type, sampling_percent))
-        logging.info("using device: {}".format(self.device))
+        logging.info("run device: {}, net device: {}".format(self.device, self.model.device))
         pass
 
     @classmethod
@@ -80,21 +83,20 @@ class UserAction_run:
         return cls(cls.load(path), sampling_type='part')
 
     def train(self):
-        batch = self.train_loader
         # 开始训练
         print('start to training model......')
         logging.info('start to training model......')
         for e in range(self.epoch_num):
-            with tqdm(batch, desc="epoch:{}".format(str(e)), position=0) as t_epoch:
+            with tqdm(self.train_loader, desc="epoch:{}".format(str(e)), position=0) as t_epoch:
                 for inputs, labels in t_epoch:
                     # forward
                     # inputs, labels = data
                     inputs = inputs.view(len(inputs), 1, -1)
-                    inputs.to(self.device)
                     outputs = self.model(inputs)
 
                     # Compute loss
                     self.optimizer.zero_grad()
+                    # labels = labels.to(self.device)
                     Loss = self.loss(outputs, labels)
 
                     # backward

@@ -24,7 +24,6 @@ class UserAction_Net(nn.Module):
         )  # regression
 
     def forward(self, x):
-        x.to(self.device)
         y = self.LSTM(x)[0]  # y, (h, c) = self.rnn(x)
         seq_len, batch_size, hid_dim = y.shape
         y = y.view(-1, hid_dim)
