@@ -3,7 +3,26 @@ from data.build_dataset import get_label
 import numpy as np
 import pandas as pd
 import torch
+import torch.nn as nn
 import pickle
+
+_method = "sql"
+# range(1000) in [0,999]
+batch_size = 1000
+seq_len = 11
+
+
+def load_df(method=_method):
+    if method == "sql":
+        import sqlite3
+        con = sqlite3.connect("./data/UserAction.db")
+        df = pd.read_sql_query(sql="select * from trace", con=con)
+    elif method == "csv":
+        df = pd.read_csv("./data/trace.csv")
+    else:
+        raise ValueError("method not fit")
+    # df.drop(["idle"])
+    return df
 
 
 class UserAction_Dataset(Dataset):
@@ -36,10 +55,7 @@ class UserAction_Dataset(Dataset):
         default loading all the data without sampling
         :return:
         """
-        if is_pkl:
-            temp = pickle.load(open("./data/trace.pkl", "rb"))
-        else:
-            temp = pd.read_csv("./data/trace.csv")
+        temp = load_df()
         source = temp.values[:, :-1]
         label = temp.values[:, -1]
         return cls(source, label)
@@ -51,11 +67,11 @@ class UserAction_Dataset(Dataset):
 
         :return: train dataset, test dataset
         """
-        df_temp = pd.read_csv("./data/trace.csv")
+        df_temp = load_df()
         df_train = df_temp[(df_temp['day'] >= 1) & (df_temp['day'] <= 4)]
         df_test = df_temp[df_temp['day'] == 5]
         df_test = df_test[df_test['is_free'] == 1]
-        return cls(df_train.values[:, :-1], df_train[:, -1]), cls(df_test.values[:, :-1], df_test[:, -1])
+        return cls(df_train.values[:, :-1], df_train.values[:, -1]), cls(df_test.values[:, :-1], df_test.values[:, -1])
 
     def __getitem__(self, index):
         return self.source[index], self.label[index]
@@ -80,8 +96,9 @@ class UserAction_Dataset(Dataset):
 
 
 if __name__ == '__main__':
-
-    temp = pd.read_csv("./data/trace.csv")
-    pickle.dump(temp, open("./data/trace.pkl", "wb"))
-
+    ts = torch.tensor([10, 1, 2, 3])
+    ts_1, ts_2 = ts.split([1, 3])
+    embed = nn.Embedding(batch_size, 3, 1)
+    vec = embed(ts_1).squeeze()
+    print(torch.cat([vec, ts_2]))
     pass

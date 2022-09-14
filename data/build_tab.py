@@ -1,3 +1,5 @@
+import sqlite3
+
 import numpy as np
 import pandas as pd
 
@@ -24,8 +26,13 @@ tab = pd.DataFrame(columns=[names])
 for i, nam in enumerate(names, 0):
     tab[nam] = temp[i]
 
-tab["tag"] = label
+tab["idle"] = label
 
 print(tab)
 
-tab.to_csv("./trace.csv", index=False)
+# tab.to_csv("./trace.csv", index=False)
+sql = sqlite3.connect("../data/UserAction.db")
+
+# tab = pd.read_csv("./trace.csv")
+
+tab.to_sql("trace", con=sql,index=False)

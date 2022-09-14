@@ -51,20 +51,24 @@ class UserAction_run:
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
 
         # sampling set
-        if sampling_type == 'by day':
+        if sampling_type == 'by_day':
             train, test = UserAction_Dataset.by_day_init()
+
         elif sampling_type == 'rand':
             # 随机取样
             data = UserAction_Dataset.default_init()
             train, test = data.split_rand_sample(sampling_percent)
+            del data
+
         elif sampling_type == 'part':
             # 直接采样，直接将数据集分割为两部分
             data = UserAction_Dataset.default_init()
             train, test = data.split_part_sample(sampling_percent)
+            del data
+
             pass
         else:
             raise ValueError("unrecognized type for sampling")
-        del data
 
         train.change_device(self.device)
         test.change_device(self.device)
@@ -78,12 +82,12 @@ class UserAction_run:
         pass
 
     @classmethod
-    def loading_init(cls, path):
+    def loading_init(cls, path, sampling_type):
         """
         loading trained model from file
         :return: model load from file
         """
-        return cls(cls.load(path), sampling_type='part')
+        return cls(cls.load(path), sampling_type=sampling_type)
 
     def train(self):
         # 开始训练
@@ -114,6 +118,7 @@ class UserAction_run:
         pass
 
     def save(self, path="./data/model.pkl"):
+        logging.info("saving model to "+path)
         pickle.dump(self.model, open(path, 'wb'))
 
     @staticmethod

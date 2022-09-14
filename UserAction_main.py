@@ -9,6 +9,9 @@ parser.add_argument(
     action="store_true"
 )
 parser.add_argument(
+    "--savelog", action="store_true",
+)
+parser.add_argument(
     "--logpath", action="store",
     default='./runs/logs/model.log',
     help="edit log saving path"
@@ -46,18 +49,17 @@ parser.add_argument(
     help="split method for the Dataset"
 )
 
-
 if __name__ == '__main__':
 
     args = parser.parse_args()
     logging.basicConfig(format='%(asctime)s - %(levelname)s:: %(message)s',
                         level=logging.INFO if args.verbose else logging.WARNING,
-                        filename=args.logpath,
+                        filename=args.logpath if args.savelog else None,
                         filemode='a')
     logging.info("Program start....., detail in {}".format(args.logpath))
     if args.load:
         logging.info("loading models from {}".format(args.modelpath))
-        obj = UserAction_run.loading_init(args.modelpath)
+        obj = UserAction_run.loading_init(args.modelpath, args.sampling)
     else:
         logging.info("new model build")
         obj = UserAction_run(sampling_type=args.sampling)
