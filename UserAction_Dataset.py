@@ -1,18 +1,22 @@
+import logging
+
 from torch.utils.data import Dataset, DataLoader, random_split
-from data.build_dataset import get_label
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-import pickle
 
+"""
+    部分预设的方式
+"""
 _method = "sql"
 # range(1000) in [0,999]
-batch_size = 1000
+user_size = 1000
 seq_len = 11
 
 
 def load_df(method=_method):
+    logging.info("loading data by {}".format(_method))
     if method == "sql":
         import sqlite3
         con = sqlite3.connect("./data/UserAction.db")
@@ -32,10 +36,25 @@ class UserAction_Dataset(Dataset):
     thus we aiming at using the historical data the predict next time action
     """
 
+    # 基于数据集对对模型进行优化，考虑嵌入的过程
+    # 有些改用整值的就应该拿去做embedding
+    # 考虑一下，哪些feature需要进行一下embedding升维度的
+
     def __init__(self, source, label):
         super(UserAction_Dataset, self).__init__()
         self.source = torch.as_tensor(source, dtype=torch.float)
         self.label = torch.as_tensor(label, dtype=torch.float)
+        pass
+
+    def __getitem__(self, index):
+        return self.source[index], self.label[index]
+
+    def __len__(self):
+        return len(self.source)
+
+    def reshape(self):
+        self.source = self.source.view(-1, 10, 11)
+        self.label = self.label.view(-1, 10, 1)
         pass
 
     def change_device(self, dev):
@@ -50,7 +69,7 @@ class UserAction_Dataset(Dataset):
         pass
 
     @classmethod
-    def default_init(cls, is_pkl=False):
+    def default_init(cls):
         """
         default loading all the data without sampling
         :return:
@@ -73,32 +92,58 @@ class UserAction_Dataset(Dataset):
         df_test = df_test[df_test['is_free'] == 1]
         return cls(df_train.values[:, :-1], df_train.values[:, -1]), cls(df_test.values[:, :-1], df_test.values[:, -1])
 
-    def __getitem__(self, index):
-        return self.source[index], self.label[index]
+    """
+        之前使用每条数据作为样本进行训练，对于LSTM来说，我们输入的数据如果为序列数据的话会更好
+        同时用大矩阵运算速度会加快
+        
+        进行时间序列化，为了使得我们能够准确的按照序列的长度划分，我们有两种处理方式：
+        1.将训练集化为序列长的整数倍
+        2.使用滑动窗口构建数据集
+        
+        目前而言是使用滑动窗口
+    """
 
-    def __len__(self):
-        return len(self.source)
+    train_len = 770000
 
-    def split_rand_sample(self, sampling_percent: float):
-        train_len = int(len(self) * sampling_percent)
+    @classmethod
+    def rand_sample_init(cls):
+        """
+        解决使用torch自带抽样为伪抽样，不划分数据的问题，使用numpy抽样，在构建对象时，就进行抽样，按照序列来进行划分
+
+        :return:
+        """
+        return
+
+    def split_rand_sample(self, sampling_percent: float = None):
+        if sampling_percent is not None:
+            train_len = int(len(self) * sampling_percent)
+        else:
+            train_len = self.train_len
+
         train, test = random_split(self, [train_len, len(self) - train_len])
         return train.dataset, test.dataset
 
-    def split_part_sample(self, sampling_percent: float):
-        train_len = int(len(self) * sampling_percent)
+    def split_part_sample(self, sampling_percent: float = None):
+        if sampling_percent is not None:
+            train_len = int(len(self) * sampling_percent)
+        else:
+            train_len = self.train_len
+
         train, test = self[:train_len], self[train_len:]
         train = UserAction_Dataset(train[0], train[1])
         test = UserAction_Dataset(test[0], test[1])
         return train, test
 
-    def split_order_sample(self, sampling_percent: float):
-        return
-
 
 if __name__ == '__main__':
-    ts = torch.tensor([10, 1, 2, 3])
-    ts_1, ts_2 = ts.split([1, 3])
-    embed = nn.Embedding(batch_size, 3, 1)
-    vec = embed(ts_1).squeeze()
-    print(torch.cat([vec, ts_2]))
+    # torch 的dim属性是从高维到低维的
+    # obj = UserAction_Dataset.default_init()
+    # res = obj.source[:100]
+    # res = obj.source[:10000]
+    # print(res.view(-1, 10, 11))
+
+    df = load_df()
+    # df.set_index('id', inplace=True)
+    df = df[df['id'] == 0]
+    print(df)
     pass

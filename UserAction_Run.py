@@ -32,7 +32,7 @@ class UserAction_run:
     loss = nn.MSELoss()
 
     def __init__(self, model: nn.Module = None,
-                 sampling_percent: float = 0.9,
+                 sampling_percent: float = None,
                  sampling_type: str = 'part'):
         """
         :cvar
@@ -41,43 +41,25 @@ class UserAction_run:
             'rand': would call rand sampling methods
         """
 
+        self.sampling_percent = sampling_percent
+        self.sampling_type = sampling_type
+
         if model is not None:
             self.model = model
         else:
             self.model = UserAction_Net()
 
+        self.judge_dataset()
+
         self.model.device = self.device
 
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
 
-        # sampling set
-        if sampling_type == 'by_day':
-            train, test = UserAction_Dataset.by_day_init()
-
-        elif sampling_type == 'rand':
-            # 随机取样
-            data = UserAction_Dataset.default_init()
-            train, test = data.split_rand_sample(sampling_percent)
-            del data
-
-        elif sampling_type == 'part':
-            # 直接采样，直接将数据集分割为两部分
-            data = UserAction_Dataset.default_init()
-            train, test = data.split_part_sample(sampling_percent)
-            del data
-
-            pass
-        else:
-            raise ValueError("unrecognized type for sampling")
-
-        train.change_device(self.device)
-        test.change_device(self.device)
-
-        self.train_loader = DataLoader(train)
-        self.test_loader = DataLoader(test)
         self.model.to(self.device)
 
-        logging.info("pre-building finished, with {} split method at {:2f}.".format(sampling_type, sampling_percent))
+        logging.info("pre-building finished, with {} split method at {}.".format(
+            sampling_type,
+            "not" if sampling_percent is None else sampling_percent))
         logging.info("run device: {}, net device: {}".format(self.device, self.model.device))
         pass
 
@@ -89,16 +71,44 @@ class UserAction_run:
         """
         return cls(cls.load(path), sampling_type=sampling_type)
 
-    def train(self):
+    def train_(self):
+        """
+        更改了训练的方式，老方法是一条一条数据放进去训练，现在是将数据按照一个一个seq放放进去，同时一次放置多个数据
+        也就是我们现在每次放入的tenosr为[N,L,H]，N为我们的样本数量，L为我们设定的一个时间序列的长度，H是在序列中每个单维样本的长度
+
+        这里我们将第一个列id分割出来，进行一个embedding处理
+        :return:
+        """
+        # 开始训练
+        # print('start to training model......')
+        logging.info('start to training model......')
+        self.train_loader.dataset.reshape()
+        for e in range(self.epoch_num):
+            with tqdm(self.train_loader, desc="epoch:{}".format(str(e)), position=0) as t_epoch:
+                for inputs, label in t_epoch:
+
+                    outputs = self.model(inputs)
+
+                    # Compute loss
+                    self.optimizer.zero_grad()
+                    Loss = self.loss(outputs, label)
+
+                    # backward
+                    Loss.backward()
+                    pass
+        pass
+
+    def train_old(self):
         # 开始训练
         print('start to training model......')
         logging.info('start to training model......')
         for e in range(self.epoch_num):
             with tqdm(self.train_loader, desc="epoch:{}".format(str(e)), position=0) as t_epoch:
                 for inputs, labels in t_epoch:
+                    self.model.zero_grad()
+
                     # forward
-                    # inputs, labels = data
-                    inputs = inputs.view(len(inputs), 1, -1)
+                    inputs = inputs.squeeze()
                     outputs = self.model(inputs)
 
                     # Compute loss
@@ -118,7 +128,7 @@ class UserAction_run:
         pass
 
     def save(self, path="./data/model.pkl"):
-        logging.info("saving model to "+path)
+        logging.info("saving model to " + path)
         pickle.dump(self.model, open(path, 'wb'))
 
     @staticmethod
@@ -162,6 +172,32 @@ class UserAction_run:
         res["recall_score"] = recall_score(y_test, y_x, average='macro') * 100  # 打印验证集查全率
         res["f1_score"] = f1_score(y_test, y_x, average='macro') * 100
         return res
+
+    def judge_dataset(self):
+        # sampling set
+        if self.sampling_type == 'by_day':
+            train, test = UserAction_Dataset.by_day_init()
+
+        elif self.sampling_type == 'rand':
+            # 随机取样
+            data = UserAction_Dataset.default_init()
+            train, test = data.split_rand_sample(self.sampling_percent)
+            del data
+
+        elif self.sampling_type == 'part':
+            # 直接采样，直接将数据集分割为两部分
+            data = UserAction_Dataset.default_init()
+            train, test = data.split_part_sample(self.sampling_percent)
+            del data
+        else:
+            raise ValueError("unrecognized type for sampling")
+
+        train.change_device(self.device)
+        test.change_device(self.device)
+
+        self.train_loader = DataLoader(train)
+        self.test_loader = DataLoader(test)
+        return
 
 
 if __name__ == '__main__':

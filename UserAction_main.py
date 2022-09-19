@@ -45,7 +45,7 @@ parser.add_argument(
 
 parser.add_argument(
     "--sampling", action="store",
-    type=str, default="part",
+    type=str, default=None,
     help="split method for the Dataset"
 )
 
@@ -61,7 +61,7 @@ if __name__ == '__main__':
         logging.info("loading models from {}".format(args.modelpath))
         obj = UserAction_run.loading_init(args.modelpath, args.sampling)
     else:
-        logging.info("new model build")
+        logging.info("new model build, sampling {}".format(args.sampling))
         obj = UserAction_run(sampling_type=args.sampling)
 
     obj.epoch_num = args.epochs
@@ -72,7 +72,7 @@ if __name__ == '__main__':
         obj.model.device = obj.device
 
     if args.train:
-        obj.train()
+        obj.train_()
         obj.save(args.modelpath)
 
     if args.test:
