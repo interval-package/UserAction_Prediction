@@ -13,12 +13,8 @@ import torch.nn as nn
 _method = "sql"
 
 # range(1000) in [0,999]
-user_size = 1000
 
-feature_len = 11
-seq_len = 1
-
-window_size = 100
+from UserAction_main import user_size, feature_len, seq_len, window_size
 
 
 def load_df(method=_method):

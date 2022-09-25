@@ -1,8 +1,11 @@
 import logging
 import argparse
+user_size = 1000
 
-import UserAction_Dataset
-from UserAction_Run import *
+feature_len = 11
+seq_len = 1
+
+window_size = 100
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -56,6 +59,8 @@ parser.add_argument(
     help="sequence length for input size"
 )
 
+from UserAction_Run import *
+
 if __name__ == '__main__':
 
     args = parser.parse_args()
@@ -71,7 +76,7 @@ if __name__ == '__main__':
         logging.info("new model build, sampling {}".format(args.sampling))
         obj = UserAction_run(sampling_type=args.sampling)
 
-    UserAction_Dataset.seq_len = args.seqlen
+    seq_len = args.seqlen
 
     obj.epoch_num = args.epochs
 
