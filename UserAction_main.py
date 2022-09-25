@@ -1,6 +1,7 @@
 import logging
 import argparse
 
+import UserAction_Dataset
 from UserAction_Run import *
 
 parser = argparse.ArgumentParser()
@@ -49,6 +50,12 @@ parser.add_argument(
     help="split method for the Dataset"
 )
 
+parser.add_argument(
+    "--seqlen", action="store",
+    type=int, default=1,
+    help="sequence length for input size"
+)
+
 if __name__ == '__main__':
 
     args = parser.parse_args()
@@ -64,7 +71,11 @@ if __name__ == '__main__':
         logging.info("new model build, sampling {}".format(args.sampling))
         obj = UserAction_run(sampling_type=args.sampling)
 
+    UserAction_Dataset.seq_len = args.seqlen
+
     obj.epoch_num = args.epochs
+
+    obj.generate_dataset()
 
     if args.gpu:
         logging.info("try to use cuda")
@@ -76,5 +87,6 @@ if __name__ == '__main__':
         obj.save(args.modelpath)
 
     if args.test:
-        obj.test()
+        # obj.test()
+        obj.test_by_nag_pos()
     pass

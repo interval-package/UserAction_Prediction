@@ -1,6 +1,6 @@
 import logging
 
-from torch.utils.data import Dataset, DataLoader, random_split
+from torch.utils.data import Dataset, random_split
 import numpy as np
 import pandas as pd
 import torch
@@ -9,10 +9,16 @@ import torch.nn as nn
 """
     部分预设的方式
 """
+
 _method = "sql"
+
 # range(1000) in [0,999]
 user_size = 1000
-seq_len = 11
+
+feature_len = 11
+seq_len = 1
+
+window_size = 100
 
 
 def load_df(method=_method):
@@ -20,13 +26,13 @@ def load_df(method=_method):
     if method == "sql":
         import sqlite3
         con = sqlite3.connect("./data/UserAction.db")
-        df = pd.read_sql_query(sql="select * from trace", con=con)
+        _df = pd.read_sql_query(sql="select * from trace", con=con)
     elif method == "csv":
-        df = pd.read_csv("./data/trace.csv")
+        _df = pd.read_csv("./data/trace.csv")
     else:
         raise ValueError("method not fit")
     # df.drop(["idle"])
-    return df
+    return _df
 
 
 class UserAction_Dataset(Dataset):
@@ -53,8 +59,8 @@ class UserAction_Dataset(Dataset):
         return len(self.source)
 
     def reshape(self):
-        self.source = self.source.view(-1, 10, 11)
-        self.label = self.label.view(-1, 10, 1)
+        self.source = self.source.view(-1, seq_len, 11)
+        self.label = self.label.view(-1, seq_len, 1)
         pass
 
     def change_device(self, dev):
@@ -133,6 +139,20 @@ class UserAction_Dataset(Dataset):
         train = UserAction_Dataset(train[0], train[1])
         test = UserAction_Dataset(test[0], test[1])
         return train, test
+
+
+def split_nag_pos():
+    df_temp = load_df()
+    res = {}
+    res["df_temp_5"] = df_temp[df_temp['day'] == 5]
+    res["df_test_n0"] = df_temp[(df_temp['idle'] == 0) & (df_temp['day'] == 5)]
+    res["df_test_n1"] = df_temp[(df_temp['idle'] == 1) & (df_temp['day'] == 5)]
+    res["df_train_n0"] = df_temp[(df_temp['day'] >= 1) & (df_temp['day'] <= 4) & (df_temp['idle'] == 0)]
+    res["df_train_n1"] = df_temp[(df_temp['day'] >= 1) & (df_temp['day'] <= 4) & (df_temp['idle'] == 1)]
+    # TsN = len(df_temp_5)  # 验证集数量
+    # N0 = len(df_test_n0)  # 负样本总数
+    # N1 = len(df_test_n1)  # 正样本总数
+    return res
 
 
 if __name__ == '__main__':
